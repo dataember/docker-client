@@ -18,6 +18,11 @@ cabal-version:       >=1.10
 library
   exposed-modules:
     Docker
+    , Docker.Common
+    , Docker.Container
+    , Docker.Image
+    , Docker.Types
+
   -- other-modules:
   -- other-extensions:
   build-depends:
