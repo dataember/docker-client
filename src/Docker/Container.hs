@@ -18,6 +18,6 @@ import Docker.Types
 listRunningContainers :: DockerClient [Map.Map T.Text Value]
 listRunningContainers = do
     cfg <- ask
-    r   <- lift $ getAsJson (apiBase cfg) "/containers/json"
-    return $ r ^. responseBody
+    lift $ (getJson defaults $ apiBase cfg ++ "/containers/json") >>=
+        \r -> return $ r ^. responseBody
 
