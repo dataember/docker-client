@@ -14,7 +14,7 @@ import Docker.Common
 import Docker.Types
 
 
--- | List all images cached on the host
+-- | Retrieve info all images cached on the host
 listImages :: DockerClient [Map.Map T.Text Value]
 listImages = do
     cfg <- ask
