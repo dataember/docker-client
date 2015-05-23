@@ -20,12 +20,13 @@ import Docker.Types
 -- FIXME : Need to handle this properly, this call blocks
 -- and multiple "chunks" of data, in the form status updates,
 -- are sent from the server.
-createImage :: T.Text -> DockerClient BL.ByteString
-createImage from = do
+createImageBlocking :: T.Text -> DockerClient Value
+createImageBlocking from = do
     cfg <- ask
     lift $ do
-        rsp <- post (apiBase cfg ++ "/images/create") ["fromImage" := from]
+        rsp <- asJSON =<< post (apiBase cfg ++ "/images/create") ["fromImage" := from]
         return $ rsp ^. responseBody
+
 
 
 -- | Retrieve info all images cached on the host
