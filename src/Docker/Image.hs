@@ -18,58 +18,60 @@ import Data.Map as Map
 import qualified Data.Text as T
 import Network.URL
 import Network.Wreq
+import qualified Network.Wreq.Session as S
 import Network.Wreq.Types
 
 
 -- | Create an image.
-createImage :: Postable a => Host -> Options -> Maybe a -> IO (Response ByteString)
-createImage host opts maybePayload =
+createImage :: Postable a => Host -> S.Session -> Options -> Maybe a -> IO (Response ByteString)
+createImage host sess opts maybePayload =
     case maybePayload of
-        Just p -> post' host opts p
-        Nothing-> post' host opts emptyObject
+        Just p -> post' host sess opts p
+        Nothing-> post' host sess opts emptyObject
   where
-    post' host opts = postWith opts (show host  ++ "/images/create")
+    post' host sess opts = S.postWith opts sess (show host  ++ "/images/create")
 
 
 -- | Retrieve info all images cached on the host
-listImages :: Host -> Options -> IO (Response ByteString)
-listImages host opts =
-     getWith opts (show host ++ "/images/json")
+listImages :: Host -> S.Session -> Options -> IO (Response ByteString)
+listImages host sess opts =
+     S.getWith opts sess (show host ++ "/images/json")
 
 
 -- Inspect an image.
-inspectImage :: Host -> Options -> String -> IO (Response ByteString)
-inspectImage host opts name =
-    getWith opts (show host ++ "/images/" ++ name ++ "/json")
+inspectImage :: Host -> S.Session -> Options -> String -> IO (Response ByteString)
+inspectImage host sess opts name =
+    S.getWith opts sess (show host ++ "/images/" ++ name ++ "/json")
 
 
 -- | Get the history of an image.
-imageHistory :: Host -> String -> IO (Response ByteString)
-imageHistory host name =
-    get (show host ++ "/images/" ++ name ++ "/history")
+imageHistory :: Host -> S.Session -> Options -> String -> IO (Response ByteString)
+imageHistory host sess opts name =
+    S.getWith opts sess (show host ++ "/images/" ++ name ++ "/history")
 
 
 -- | Push an image to the registry it is tagged with.
-pushImage :: Host -> Options -> Maybe String -> String -> IO (Response ByteString)
-pushImage host opts maybeRepo name =
+pushImage :: Host -> S.Session -> Options -> Maybe String -> String -> IO (Response ByteString)
+pushImage host sess opts maybeRepo name =
     case maybeRepo of
         Just repo ->
-            postWith opts (genEndpoint host $ repo ++ "/" ++ name) emptyObject
-        Nothing   -> postWith opts (genEndpoint host $ name) emptyObject
+            S.postWith opts sess (genEndpoint host $ repo ++ "/" ++ name) emptyObject
+        Nothing   ->
+            S.postWith opts sess (genEndpoint host $ name) emptyObject
   where
     genEndpoint :: Host -> String -> String
     genEndpoint host s = show host ++ "/images/" ++ s ++ "/push"
 
 
 -- | Tag an images with the given repository name.
-tagImage :: Host -> Options -> String -> IO (Response ByteString)
-tagImage host opts name =
-    postWith opts (show host ++ "/images/" ++ name ++ "/tag") emptyObject
+tagImage :: Host -> S.Session -> Options -> String -> IO (Response ByteString)
+tagImage host sess opts name =
+    S.postWith opts sess (show host ++ "/images/" ++ name ++ "/tag") emptyObject
 
 
 -- | Delete an image.
-deleteImage :: Host -> Options -> String -> IO (Response ByteString)
-deleteImage host opts name =
-    deleteWith opts (show host ++ "/images/" ++ name)
+deleteImage :: Host -> S.Session -> Options -> String -> IO (Response ByteString)
+deleteImage host sess opts name =
+    S.deleteWith opts sess (show host ++ "/images/" ++ name)
 
 
