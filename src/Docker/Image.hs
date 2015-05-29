@@ -1,47 +1,75 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE
+    DataKinds
+    , EmptyDataDecls
+    , GADTs
+    , OverloadedStrings
+    , TypeFamilies
+    #-}
 
 module Docker.Image where
 
 import Control.Monad.Reader (ask)
 import Control.Monad.Trans.Class (lift)
 import Control.Lens.Operators
-import Data.Aeson (Value)
-import Data.Aeson.Lens
-import Data.ByteString.Lazy as BL
+import Data.Aeson
+import Data.Aeson.Types (emptyObject)
+import Data.ByteString.Lazy
 import Data.Map as Map
 import qualified Data.Text as T
+import Network.URL
 import Network.Wreq
-
-import Docker.Common
-import Docker.Types
+import Network.Wreq.Types
 
 
--- | Pull an image from docker hub
--- FIXME : Need to handle this properly, this call blocks
--- and multiple "chunks" of data, in the form status updates,
--- are sent from the server.
-createImageBlocking :: T.Text -> DockerClient Value
-createImageBlocking from = do
-    cfg <- ask
-    lift $ do
-        rsp <- asJSON =<< post (apiBase cfg ++ "/images/create") ["fromImage" := from]
-        return $ rsp ^. responseBody
-
+-- | Create an image.
+createImage :: Postable a => Host -> Options -> Maybe a -> IO (Response ByteString)
+createImage host opts maybePayload =
+    case maybePayload of
+        Just p -> post' host opts p
+        Nothing-> post' host opts emptyObject
+  where
+    post' host opts = postWith opts (show host  ++ "/images/create")
 
 
 -- | Retrieve info all images cached on the host
-listImages :: DockerClient (Either Int [Map.Map T.Text Value])
-listImages = do
-    cfg <- ask
-    lift $ (getJson defaults $ apiBase cfg ++ "/images/json") >>=
-        \r -> return $ getResponse r
-  where
-    getResponse :: Response a -> Either Int a
-    getResponse r =
-        let status = r ^. responseStatus . statusCode in
-            case (status) of
-                200 -> Right $ r ^. responseBody
-                _   -> Left status
+listImages :: Host -> Options -> IO (Response ByteString)
+listImages host opts =
+     getWith opts (show host ++ "/images/json")
 
+
+-- Inspect an image.
+inspectImage :: Host -> Options -> String -> IO (Response ByteString)
+inspectImage host opts name =
+    getWith opts (show host ++ "/images/" ++ name ++ "/json")
+
+
+-- | Get the history of an image.
+imageHistory :: Host -> String -> IO (Response ByteString)
+imageHistory host name =
+    get (show host ++ "/images/" ++ name ++ "/history")
+
+
+-- | Push an image to the registry it is tagged with.
+pushImage :: Host -> Options -> Maybe String -> String -> IO (Response ByteString)
+pushImage host opts maybeRepo name =
+    case maybeRepo of
+        Just repo ->
+            postWith opts (genEndpoint host $ repo ++ "/" ++ name) emptyObject
+        Nothing   -> postWith opts (genEndpoint host $ name) emptyObject
+  where
+    genEndpoint :: Host -> String -> String
+    genEndpoint host s = show host ++ "/images/" ++ s ++ "/push"
+
+
+-- | Tag an images with the given repository name.
+tagImage :: Host -> Options -> String -> IO (Response ByteString)
+tagImage host opts name =
+    postWith opts (show host ++ "/images/" ++ name ++ "/tag") emptyObject
+
+
+-- | Delete an image.
+deleteImage :: Host -> Options -> String -> IO (Response ByteString)
+deleteImage host opts name =
+    deleteWith opts (show host ++ "/images/" ++ name)
 
 
