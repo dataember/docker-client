@@ -24,6 +24,10 @@ data DockerClientConfig = DockerClientConfig
     , session  :: S.Session
     } deriving (Show)
 
+applyCfg :: DockerClientConfig -> (String -> S.Session -> a) -> a
+applyCfg conf f = f (exportHost $ hostname conf) (session conf)
+
+
 data ContainerSpec = ContainerSpec
     { chostname        :: T.Text
     , domainName      :: T.Text
