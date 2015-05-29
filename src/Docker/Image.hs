@@ -21,12 +21,7 @@ import Network.Wreq
 import qualified Network.Wreq.Session as S
 import Network.Wreq.Types
 
-data DockerClientConfig = DockerClientConfig
-    { hostname :: Host
-    , session  :: S.Session
-    } deriving (Show)
-
-
+import Docker.Types
 
 -- | Create an image.
 createImage :: Postable a => DockerClientConfig -> Options -> Maybe a -> IO (Response ByteString)
