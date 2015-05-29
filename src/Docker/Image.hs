@@ -35,6 +35,7 @@ createImage conf opts maybePayload =
             sess = session conf
         in  S.postWith opts sess (show host  ++ "/images/create")
 
+
 -- | Retrieve info all images cached on the host
 listImages :: DockerClientConfig -> Options -> IO (Response ByteString)
 listImages conf opts =
