@@ -39,6 +39,7 @@ library
     , text
     , transformers
     , url
+    , websockets
     , wreq
 
   hs-source-dirs:      src

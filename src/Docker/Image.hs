@@ -24,9 +24,6 @@ import Network.Wreq.Types
 import Docker.Types
 
 
-applyCfg :: DockerClientConfig -> (String -> S.Session -> a) -> a
-applyCfg conf f = f (exportHost $ hostname conf) (session conf)
-
 
 -- | Create an image.
 createImage :: Postable a => DockerClientConfig -> Options -> Maybe a -> IO (Response ByteString)
