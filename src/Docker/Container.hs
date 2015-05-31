@@ -14,8 +14,8 @@ import Docker.Types
 
 
 -- | Create a container.
-createContainer' :: DockerClientConfig -> Options -> ContainerSpec -> IO (Response ByteString)
-createContainer' conf opts cspec =
+createContainer :: DockerClientConfig -> Options -> ContainerSpec -> IO (Response ByteString)
+createContainer conf opts cspec =
     applyCfg conf $ \host sess ->
         S.postWith opts sess (host ++ "/containers/create") (toJSON cspec)
 
