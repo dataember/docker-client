@@ -22,18 +22,26 @@ import Data.Monoid
 import Network.HTTP.Conduit hiding (Proxy)
 import Network.URL
 
+import Docker.Conduit.Types
 
-pullImage :: (MonadReader DockerClientConfig m, MonadResource m) =>
-    BS.ByteString -> m (Response (ResumableSource m BS.ByteString))
-pullImage name = do
+-- | Pull an image of the given name and tag from the specifiedi
+-- repo and registry.
+--
+-- FIXME : The parameters here should be typed, not just ByteStrings.
+pullImage :: (MonadReader DockerClientConfig m, MonadResource m)
+    => [(BS.ByteString, Maybe BS.ByteString)]
+    -> m (Response (ResumableSource m BS.ByteString))
+pullImage queryParams = do
     config <- ask
     let host= clientHost config
     let manager = clientManager config
-    initReq <- liftIO $ parseUrl $ (exportHost host) ++ "/images/create"
+    initReq <- liftIO $ reqBuilder host queryParams
     http initReq{ method = "POST"
                 , redirectCount = 0
                 , checkStatus = \_ _ _ -> Nothing
-                , queryString =  "fromImage=" <> name
                 } manager
-
+  where
+    reqBuilder host qps = do
+        req <- parseUrl $ (exportHost host) ++ "/images/create"
+        return $ setQueryString qps req
 

@@ -1,3 +1,6 @@
+{-# LANGUAGE
+    OverloadedStrings
+    #-}
 
 module Docker.Conduit.Client where
 
@@ -12,24 +15,18 @@ import Data.Monoid
 import Network.HTTP.Conduit hiding (Proxy)
 import Network.URL
 
-
-data DockerClientConfig = DockerClientConfig
-    { clientManager :: Manager
-    , clientHost    :: Host
-    }
-
-
-type DockerClient m a = ReaderT DockerClientConfig m a
+import Docker.Conduit.Image
+import Docker.Conduit.Types
 
 runClient :: MonadResource m => DockerClientConfig -> DockerClient m a -> m a
 runClient cfg = flip runReaderT cfg
 
-run :: IO ()
-run = runResourceT $ do
+testClient :: IO ()
+testClient = runResourceT $ do
     manager <- liftIO $ newManager conduitManagerSettings
     let dockerHost = Host (HTTP False) ("192.168.1.2") (Just 2375)
     let cfg = DockerClientConfig manager dockerHost
+    let queryParams = [("fromImage", Just "ubuntu")]
     runClient cfg $ do
-        pullImage "tu" >>= \s -> responseBody s $$+- CB.sinkFile "out"
-
+        pullImage queryParams >>= \s -> responseBody s $$+- CB.sinkFile "out"
 
