@@ -19,7 +19,7 @@ library
   exposed-modules:
     Docker
     , Docker.Common
-    , Docker.Conduit.Container
+    , Docker.Conduit.Image
     , Docker.Container
     , Docker.Image
     , Docker.Types

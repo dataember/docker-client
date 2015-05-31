@@ -9,29 +9,14 @@
     , TypeFamilies
     #-}
 
-module Docker.Conduit.Container where
+module Docker.Conduit.Image where
 
-import Control.Applicative hiding (empty)
-import Control.Lens
-import Control.Monad
-import Control.Monad.Base
 import Control.Monad.Catch
-import Control.Monad.IO.Class
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Control
 import Control.Monad.Reader
-import Control.Monad.Trans.Resource (runResourceT, MonadResource, ResourceT)
+import Control.Monad.Trans.Resource (MonadResource)
 import qualified Data.ByteString as BS
-import qualified Data.ByteString.Lazy.Char8 as BC
-import Data.ByteString.Lazy hiding (foldl, foldl1)
-import Data.ByteString.Builder
 import Data.Conduit
-import Data.Conduit.Binary
-import qualified Data.Conduit.Combinators as CC
-import Data.Proxy
 import Data.Monoid
-import qualified Data.Text as T
-import GHC.TypeLits
 import Network.HTTP.Conduit hiding (Proxy)
 
 
