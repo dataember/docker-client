@@ -9,6 +9,7 @@ import Control.Monad.Catch
 import Control.Monad.Reader
 import Control.Monad.Trans.Resource (runResourceT, MonadResource, ResourceT)
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BL
 import Data.Conduit
 import qualified Data.Conduit.Binary as CB
 import qualified Data.Conduit.Combinators as CC
@@ -28,7 +29,8 @@ testClient = runResourceT $ do
     manager <- liftIO $ newManager conduitManagerSettings
     let dockerHost = Host (HTTP False) ("192.168.1.2") (Just 2375)
     let cfg = DockerClientConfig manager dockerHost
---    let queryParams = [("fromImage", Just "ubuntu")]
+    let queryParams = [("fromSrc", Just "-"), ("tag", Just "1.0.0")]
+    tar <- liftIO $ BL.readFile "/var/tmp/postgres.tar"
     runClient cfg $ do
-        info >>= \s -> responseBody s $$+- CC.stdout
+        importContainerImageFromTar queryParams tar >>= \s -> responseBody s $$+- CC.stdout
 
