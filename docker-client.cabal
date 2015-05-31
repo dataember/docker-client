@@ -21,6 +21,7 @@ library
     , Docker.Common
     , Docker.Conduit.Client
     , Docker.Conduit.Image
+    , Docker.Conduit.Info
     , Docker.Conduit.Types
     , Docker.Container
     , Docker.Image
