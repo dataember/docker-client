@@ -22,9 +22,15 @@ import Docker.Conduit.Types
 import Debug.Trace
 
 
+-------------------------------------------------------------------------------
+-- * Endpoint : /images/create
+
 -- | Pull an image of the given name and tag from the specified
 -- repo and registry.
 --
+-- @
+--  ...
+--  pullImage [("fromImage", "ubuntu"),("tag","14.10")]
 -- FIXME : The parameters here should be typed, not just ByteStrings.
 pullImage :: (MonadReader DockerClientConfig m, MonadResource m)
     => [(BS.ByteString, Maybe BS.ByteString)] -- ^ Query params
@@ -45,34 +51,7 @@ pullImage queryParams = do
                 }
 
 
--- | Load a tarball with a set of images and tags into docker.
---
--- This call does not return any information on the image after
--- loading.
-loadImagesFromTar :: (MonadReader DockerClientConfig m, MonadResource m)
-    => BL.ByteString
-    -> m (Response (ResumableSource m BS.ByteString))
-loadImagesFromTar tar = do
-    config <- ask
-    let host = clientHost config
-    let manager = clientManager config
-    initReq <- liftIO $ reqBuilder host
-    http (traceShow initReq $ initReq)  manager
-  where
-    reqBuilder host = do
-        req <- parseUrl $ (exportHost host) ++ "/images/load"
-        return $ req { requestBody = requestBodySourceChunked $ CB.sourceLbs tar
-                     , method = "POST"
-                     , redirectCount = 0
-                     , checkStatus = \_ _ _ -> Nothing
-                     }
-
-
--- |
--- Endpoint : /images/create
--- Method   : POST
---
--- Imports an image which was previously exported with
+-- | Imports an image which was previously exported with
 -- /containers/(containerId)/export.
 --
 -- There are two endpoints for importing "images". This endpoint, which
@@ -109,4 +88,31 @@ importContainerAsImageFromTar queryParams tar =do
                 , redirectCount = 0
                 , checkStatus = \_ _ _ -> Nothing
                 }
+
+
+-------------------------------------------------------------------------------
+-- * Endpoint : /images/load
+
+-- | Load a tarball with a set of images and tags into docker.
+--
+-- This call does not return any information on the image after
+-- loading.
+loadImagesFromTar :: (MonadReader DockerClientConfig m, MonadResource m)
+    => BL.ByteString
+    -> m (Response (ResumableSource m BS.ByteString))
+loadImagesFromTar tar = do
+    config <- ask
+    let host = clientHost config
+    let manager = clientManager config
+    initReq <- liftIO $ reqBuilder host
+    http (traceShow initReq $ initReq)  manager
+  where
+    reqBuilder host = do
+        req <- parseUrl $ (exportHost host) ++ "/images/load"
+        return $ req { requestBody = requestBodySourceChunked $ CB.sourceLbs tar
+                     , method = "POST"
+                     , redirectCount = 0
+                     , checkStatus = \_ _ _ -> Nothing
+                     }
+
 
