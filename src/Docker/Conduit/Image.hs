@@ -23,15 +23,18 @@ import Debug.Trace
 
 
 -------------------------------------------------------------------------------
--- * Endpoint : /images/create
+-- * Endpoint : \/images\/create
 
+-- FIXME : The parameters here should be typed, not just ByteStrings.
 -- | Pull an image of the given name and tag from the specified
 -- repo and registry.
 --
 -- @
 --  ...
 --  pullImage [("fromImage", "ubuntu"),("tag","14.10")]
--- FIXME : The parameters here should be typed, not just ByteStrings.
+--  ...
+-- @
+--
 pullImage :: (MonadReader DockerClientConfig m, MonadResource m)
     => [(BS.ByteString, Maybe BS.ByteString)] -- ^ Query params
     -> m (Response (ResumableSource m BS.ByteString))
@@ -52,16 +55,16 @@ pullImage queryParams = do
 
 
 -- | Imports an image which was previously exported with
--- /containers/(containerId)/export.
+-- \/containers\/(containerId)\/export.
 --
 -- There are two endpoints for importing "images". This endpoint, which
--- imports a tar created from a container export (see /containers/(id)/export)
+-- imports a tar created from a container export (see \/containers\/(id)\/export)
 -- and the /images/load endpoint which imports a tar of an actual image
--- (see /images/(name)/get).
+-- (see \/images\/(name)\/get).
 --
 -- @
 --  ...
---  tar <- liftIO $ readFile "/var/tmp/containerExport.tar"
+--  tar <- liftIO $ readFile "\/var\/tmp\/containerExport.tar"
 --  ...
 --  importContainerAsImageFromTar
 --      [("tag", Just "1.0.0")]
@@ -91,7 +94,7 @@ importContainerAsImageFromTar queryParams tar =do
 
 
 -------------------------------------------------------------------------------
--- * Endpoint : /images/load
+-- * Endpoint : \/images\/load
 
 -- | Load a tarball with a set of images and tags into docker.
 --

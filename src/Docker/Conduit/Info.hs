@@ -18,6 +18,7 @@ import Network.URL
 
 import Docker.Conduit.Types
 
+-- * Endpoint : \/info
 
 -- | Low level info on the docker daemon itself.
 info :: (MonadReader DockerClientConfig m, MonadResource m)
