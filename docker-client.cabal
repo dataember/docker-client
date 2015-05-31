@@ -24,6 +24,7 @@ library
     , Docker.Conduit.Info
     , Docker.Conduit.Types
     , Docker.Container
+    , Docker.JSON.Types
     , Docker.Image
     , Docker.Types
 
