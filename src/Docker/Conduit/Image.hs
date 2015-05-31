@@ -23,7 +23,7 @@ import Debug.Trace
 
 
 -------------------------------------------------------------------------------
--- * Endpoint : \/images\/create
+-- * Endpoint : <https://docs.docker.com/reference/api/docker_remote_api_v1.18/#create-an-image \/images\/create>
 
 -- FIXME : The parameters here should be typed, not just ByteStrings.
 -- | Pull an image of the given name and tag from the specified
@@ -74,7 +74,7 @@ pullImage queryParams = do
 --
 importContainerAsImageFromTar :: (MonadReader DockerClientConfig m, MonadResource m)
     => [(BS.ByteString, Maybe BS.ByteString)] -- ^ Needs to be typed as fromSrc is always "-"!
-    -> BL.ByteString
+    -> BL.ByteString -- ^ Lazy ByteString representing the tar
     -> m (Response (ResumableSource m BS.ByteString))
 importContainerAsImageFromTar queryParams tar =do
     config <- ask
@@ -94,14 +94,14 @@ importContainerAsImageFromTar queryParams tar =do
 
 
 -------------------------------------------------------------------------------
--- * Endpoint : \/images\/load
+-- * Endpoint : <https://docs.docker.com/reference/api/docker_remote_api_v1.18/#load-a-tarball-with-a-set-of-images-and-tags-into-docker \/images\/load>
 
 -- | Load a tarball with a set of images and tags into docker.
 --
 -- This call does not return any information on the image after
 -- loading.
 loadImagesFromTar :: (MonadReader DockerClientConfig m, MonadResource m)
-    => BL.ByteString
+    => BL.ByteString -- ^ Lazy ByteString representing the tar
     -> m (Response (ResumableSource m BS.ByteString))
 loadImagesFromTar tar = do
     config <- ask
