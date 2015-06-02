@@ -18,10 +18,11 @@ cabal-version:       >=1.10
 library
   exposed-modules:
     Docker
-    , Docker.Common
-    , Docker.Container
-    , Docker.Image
-    , Docker.Types
+    , Docker.Conduit.Client
+    , Docker.Conduit.Image
+    , Docker.Conduit.Info
+    , Docker.Conduit.Types
+    , Docker.JSON.Types
 
   -- other-modules:
   -- other-extensions:
@@ -29,13 +30,24 @@ library
     base >=4.8 && <4.9
     , aeson
     , bytestring
+    , conduit
+    , conduit-combinators
+    , conduit-extra
     , containers
+    , exceptions
     , data-default
+    , http-conduit
     , lens
     , lens-aeson
+    , monad-control
     , mtl
+    , resourcet
+    , stm
     , text
     , transformers
+    , transformers-base
+    , url
+    , websockets
     , wreq
 
   hs-source-dirs:      src
