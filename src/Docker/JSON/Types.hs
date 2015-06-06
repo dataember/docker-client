@@ -9,6 +9,7 @@ module Docker.JSON.Types where
 import Data.Aeson
 import Data.Default
 import qualified Data.Map as Map
+import Data.Maybe
 import qualified Data.Text as T
 import GHC.Generics
 
@@ -123,6 +124,23 @@ instance ToJSON ContainerSpec where
                , "SecurityOpts"   .= securityOpts
                , "HostConfig"     .= hostConfig
                ]
+
+-- These should really just be lenses into an Object, I think..
+-- Seems like it would be way more flexible.
+data ContainerCreateResponse = ContainerCreateResponse
+    { containerId       :: T.Text
+    , containerWarnings :: Maybe [T.Text]
+    } deriving (Eq, Show)
+
+instance FromJSON ContainerCreateResponse where
+    parseJSON (Object x) =  ContainerCreateResponse
+        <$> x .: "Id"
+        <*> x .:? "Warnings"
+
+instance ToJSON ContainerCreateResponse where
+    toJSON (ContainerCreateResponse {..}) = object $ catMaybes
+        [ ("Id" .=) <$> pure containerId
+        , ("Warnings" .=) <$> containerWarnings ]
 
 
 -- * HostConfig

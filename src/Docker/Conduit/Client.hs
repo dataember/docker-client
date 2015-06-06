@@ -14,7 +14,7 @@ import Control.Monad.Catch
 import Control.Monad.Reader
 import Control.Monad.Free
 import Control.Monad.Trans.Resource (runResourceT, MonadResource, ResourceT)
-import Data.Aeson (decode,eitherDecode,encode,json)
+import Data.Aeson
 import Data.Aeson.Types (parseEither, Object, Value)
 import Data.Proxy
 import qualified Data.ByteString as BS
@@ -90,7 +90,7 @@ data SApiEndpoint (e :: ApiEndpoint) :: * where
 
 type family ApiEndpointBase (e :: ApiEndpoint) :: * where
     ApiEndpointBase 'InfoEndpoint       = DockerDaemonInfo
-    ApiEndpointBase 'ContainerEndpoint  = Value --Map.Map String String -- ^ needs to be a sum type
+    ApiEndpointBase 'ContainerEndpoint  = ContainerCreateResponse--Map.Map String String -- ^ needs to be a sum type
 
 type family GetEndpoint (e :: ApiEndpoint) :: * where
     GetEndpoint 'InfoEndpoint = Proxy ()
@@ -210,7 +210,7 @@ getInfo = do
         Right i -> i
         Left e  -> error (show e)
 
-createContainer :: Free ApiF Value --(Map.Map String String)
+createContainer :: Free ApiF ContainerCreateResponse --(Map.Map String String)
 createContainer = do
     resp <-  postF SContainerEndpoint def
     return $ case resp of
