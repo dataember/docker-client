@@ -35,12 +35,15 @@ library
     , conduit-extra
     , containers
     , exceptions
+    , free
     , data-default
     , http-conduit
+    , http-types
     , lens
     , lens-aeson
     , monad-control
     , mtl
+    , network-uri
     , resourcet
     , stm
     , text
