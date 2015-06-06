@@ -59,7 +59,7 @@ instance Default ContainerSpec where
         , containerEnv       = Null
         , containerCmd       = ["echo", "test"]
         , entryPoint         = ""
-        , containerFromImage = "scratch"
+        , containerFromImage = "docker.io/fedora"
         , containerLabels    = Map.empty
         , containerVolumes   = Map.empty
         , containerWorkingDir= ""

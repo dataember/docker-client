@@ -14,7 +14,7 @@ import Control.Monad.Catch
 import Control.Monad.Reader
 import Control.Monad.Free
 import Control.Monad.Trans.Resource (runResourceT, MonadResource, ResourceT)
-import Data.Aeson (decode,encode,json)
+import Data.Aeson (decode,eitherDecode,encode,json)
 import Data.Aeson.Types (parseEither, Object, Value)
 import Data.Proxy
 import qualified Data.ByteString as BS
@@ -36,6 +36,9 @@ import Docker.Conduit.Image
 import Docker.Conduit.Types
 import Docker.JSON.Types
 
+import Debug.Trace
+
+
 runClient :: MonadResource m => DockerClientConfig -> DockerClient m a -> m a
 runClient cfg = flip runReaderT cfg
 
@@ -51,8 +54,10 @@ data DaemonAddress = DaemonAddress
 -- * Request builders
 defaultRequest :: Request
 defaultRequest =
-    def { redirectCount = 0
-        , checkStatus = \_ _ _ -> Nothing
+    def { checkStatus = \_ _ _ -> Nothing
+        , redirectCount = 0
+        , requestHeaders = requestHeaders def ++
+            [("content-type", "application/json")]
         }
 
 -- | Build a request for \/info
@@ -85,13 +90,14 @@ data SApiEndpoint (e :: ApiEndpoint) :: * where
 
 type family ApiEndpointBase (e :: ApiEndpoint) :: * where
     ApiEndpointBase 'InfoEndpoint       = DockerDaemonInfo
-    ApiEndpointBase 'ContainerEndpoint  = Map.Map String String -- ^ needs to be a sum type
+    ApiEndpointBase 'ContainerEndpoint  = Value --Map.Map String String -- ^ needs to be a sum type
 
 type family GetEndpoint (e :: ApiEndpoint) :: * where
     GetEndpoint 'InfoEndpoint = Proxy ()
 
 type family PostEndpoint (e :: ApiEndpoint) :: * where
     PostEndpoint 'ContainerEndpoint = ContainerSpec
+
 
 -- | API
 data ApiF a where
@@ -138,6 +144,7 @@ postRequest
     -> DaemonAddress
     -> Request
 postRequest SContainerEndpoint d addr =
+    traceShow d $
     (postContainerRequest addr)
         { requestBody = RequestBodyLBS $ encode d
         }
@@ -147,8 +154,10 @@ postRequest SContainerEndpoint d addr =
 
 checkResponse  :: Response a -> Either String ()
 checkResponse resp = case responseStatus resp of
-    (Status 200 _) -> Right ()
-    _              -> Left "Error!"
+    (Status 201 _) -> Right ()
+    (Status 404 m) -> Left ("No such image! " ++ show m)
+    (Status 500 m) -> Left ("Error 500! " ++ show m)
+    (Status _ _)   -> Left ("Error! Undefined status returned...")
 
 -------------------------------------------------------------------------------
 -- * Decode Responses
@@ -160,15 +169,15 @@ decodeResponse ::
 
 -- | \/info reponse
 decodeResponse SInfoEndpoint resp = checkResponse resp >>=
-    \_ -> case decode (responseBody resp) of
-        Just val-> Right val
-        Nothing -> Left "Error!"
+    \_ -> case eitherDecode (responseBody resp) of
+        Right val -> Right val
+        Left e    -> Left ("Error decoding! " ++ show e)
 
 -- | \/containers\/create response
 decodeResponse SContainerEndpoint resp = checkResponse resp >>=
-    \_ -> case decode (responseBody resp) of
-        Just val -> Right val
-        Nothing  -> Left "Error!"
+    \_ -> case eitherDecode (responseBody resp) of
+        Right val -> Right val
+        Left e    -> Left ("Error decoding! " ++ show e)
 
 
 -------------------------------------------------------------------------------
@@ -199,11 +208,11 @@ getInfo = do
     info <- getF SInfoEndpoint Proxy
     return $ case info of
         Right i -> i
-        Left _  -> error ""
+        Left e  -> error (show e)
 
-createContainer :: Free ApiF (Map.Map String String)
+createContainer :: Free ApiF Value --(Map.Map String String)
 createContainer = do
-    resp <- postF SContainerEndpoint _
+    resp <-  postF SContainerEndpoint def
     return $ case resp of
         Right r -> r
-        Left _  -> error "Error!"
+        Left e  -> error (show e)
