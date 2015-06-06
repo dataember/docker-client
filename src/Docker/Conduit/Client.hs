@@ -210,9 +210,11 @@ getInfo = do
         Right i -> i
         Left e  -> error (show e)
 
-createContainer :: Free ApiF ContainerCreateResponse --(Map.Map String String)
-createContainer = do
-    resp <-  postF SContainerEndpoint def
+createContainer
+    :: ContainerSpec
+    -> Free ApiF ContainerCreateResponse --(Map.Map String String)
+createContainer cspec = do
+    resp <-  postF SContainerEndpoint cspec
     return $ case resp of
         Right r -> r
         Left e  -> error (show e)
