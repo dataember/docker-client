@@ -18,11 +18,16 @@ cabal-version:       >=1.10
 library
   exposed-modules:
     Docker
-    , Docker.Conduit.Client
-    , Docker.Conduit.Image
-    , Docker.Conduit.Info
-    , Docker.Conduit.Types
+    , Docker.Client
+    , Docker.Request
+    , Docker.Response
+    , Docker.Language
+--    , Docker.Conduit.Client
+--    , Docker.Conduit.Image
+--    , Docker.Conduit.Info
+--    , Docker.Conduit.Types
     , Docker.JSON.Types
+    , Docker.JSON.Types.Container
 
   -- other-modules:
   -- other-extensions:
