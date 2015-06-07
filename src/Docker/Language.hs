@@ -28,6 +28,7 @@ import Data.Default
 import Data.Functor.Identity
 import qualified Data.Map as Map
 import Data.Monoid
+import qualified Data.Text as T
 import Network.HTTP.Conduit hiding (Proxy)
 import Network.HTTP.Types.Status (Status(Status))
 
@@ -36,38 +37,40 @@ import Docker.JSON.Types.Container
 
 import Debug.Trace
 
+-- | FIXME : Move these!
 data DaemonAddress = DaemonAddress
     { daemonHost :: BC.ByteString
     , daemonPort :: Int
     } deriving (Eq, Show)
 
-
+type ContainerId = BC.ByteString
 
 -- * Language for the Docker Remote API
 data ApiEndpoint =
     InfoEndpoint
-    | ContainerEndpoint
+    | ContainerCreateEndpoint
     | ContainerInfoEndpoint
 
 data SApiEndpoint (e :: ApiEndpoint) :: * where
-    SInfoEndpoint       :: SApiEndpoint 'InfoEndpoint
-    SContainerEndpoint  :: SApiEndpoint 'ContainerEndpoint
-    SContainerInfoEndpoint:: SApiEndpoint 'ContainerInfoEndpoint
+    SInfoEndpoint           :: SApiEndpoint 'InfoEndpoint
+    SContainerCreateEndpoint      :: SApiEndpoint 'ContainerCreateEndpoint
+    SContainerInfoEndpoint  :: SApiEndpoint 'ContainerInfoEndpoint
 
+-- | Bind response data for
 type family ApiEndpointBase (e :: ApiEndpoint) :: * where
-    ApiEndpointBase 'InfoEndpoint       = DockerDaemonInfo
-    ApiEndpointBase 'ContainerEndpoint  = ContainerCreateResponse
-    ApiEndpointBase 'ContainerInfoEndpoint  = ContainerInfo
+    ApiEndpointBase 'InfoEndpoint            = DockerDaemonInfo
+    ApiEndpointBase 'ContainerCreateEndpoint = ContainerCreateResponse
+    ApiEndpointBase 'ContainerInfoEndpoint   = ContainerInfo
 
+-- | Bind request data for a GET on specific endpoint
 type family GetEndpoint (e :: ApiEndpoint) :: * where
-    GetEndpoint 'InfoEndpoint = Proxy ()
-    GetEndpoint 'ContainerInfoEndpoint = BS.ByteString
+    GetEndpoint 'InfoEndpoint          = Proxy ()
+    GetEndpoint 'ContainerInfoEndpoint = ContainerId
 
+-- | bind request data for a POST on a specific endpoint
 type family PostEndpoint (e :: ApiEndpoint) :: * where
-    PostEndpoint 'ContainerEndpoint = ContainerSpec
+    PostEndpoint 'ContainerCreateEndpoint = ContainerSpec
 
-
--- | API
 data ApiF a where
     GetF
         :: SApiEndpoint e

@@ -27,6 +27,7 @@ import Data.Default
 import Data.Functor.Identity
 import qualified Data.Map as Map
 import Data.Monoid
+import qualified Data.Text as T
 import Network.HTTP.Conduit hiding (Proxy)
 import Network.HTTP.Types.Status (Status(Status))
 
@@ -47,16 +48,31 @@ defaultRequest =
             [("content-type", "application/json")]
         }
 
--- | Build a request for \/info
+-- | Build a GET request for \/info
 getInfoRequest :: DaemonAddress -> Request
 getInfoRequest da =
-    defaultRequest {
-        method = "GET"
+    defaultRequest
+        { method = "GET"
         , host = daemonHost da
         , port = daemonPort da
         , path = "/info"
         }
 
+-- | Build a GET request for \/containers\/\(id\)\/json
+getContainerInfoRequest
+    :: BC.ByteString -- ^ Container id
+    -> DaemonAddress
+    -> Request
+getContainerInfoRequest id da =
+    defaultRequest
+        { method = "GET"
+        , host = daemonHost da
+        , port = daemonPort da
+        , path = "/containers/" <> id <> "/json"
+        }
+
+
+-- | Build a POST request for \/container\/create
 postContainerRequest :: DaemonAddress -> Request
 postContainerRequest da =
     defaultRequest
@@ -66,13 +82,20 @@ postContainerRequest da =
         , path   = "/containers/create"
         }
 
-
+{-
+data ApiRequestData = ApiRequestData
+    { arPath          :: BS.ByteString
+    , arRequestBody   :: BL.ByteString
+    , arDaemonAddress :: DaemonAddress
+    }
+-}
 getRequest
     :: SApiEndpoint e
     -> GetEndpoint e
     -> DaemonAddress
     -> Request
 getRequest SInfoEndpoint d addr = getInfoRequest addr
+getRequest SContainerInfoEndpoint d addr = getContainerInfoRequest d addr
 
 
 postRequest
@@ -80,7 +103,7 @@ postRequest
     -> PostEndpoint e
     -> DaemonAddress
     -> Request
-postRequest SContainerEndpoint d addr =
+postRequest SContainerCreateEndpoint d addr =
     traceShow d $
     (postContainerRequest addr)
         { requestBody = RequestBodyLBS $ encode d

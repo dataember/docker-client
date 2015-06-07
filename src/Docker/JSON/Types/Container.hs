@@ -135,9 +135,9 @@ instance ToJSON ContainerSpec where
 -- See example request in
 -- <https://docs.docker.com/reference/api/docker_remote_api_v1.18/#create-a-container create a container.>
 data HostConfig = HostConfig
-    { binds           :: [T.Text] -- see binds, and create a type
-    , links           :: [T.Text]
-    , lxcConf         :: Map.Map T.Text T.Text
+    { binds           :: Maybe [T.Text] -- see binds, and create a type
+    , links           :: Maybe [T.Text]
+    , lxcConf         :: Maybe (Map.Map T.Text T.Text)
     , memory          :: Int
     , memorySwap      :: Int
     , cpuShares       :: Int
@@ -150,23 +150,25 @@ data HostConfig = HostConfig
     , dnsSearch       :: [T.Text] -- Search domains
     , extraHosts      :: Value -- ["hostname:ip"], can be null???
     , volumesFrom     :: [T.Text]
-    , capAdd          :: [T.Text]
+    , capAdd          :: Maybe [T.Text]
     , capDrop         :: [T.Text]
-    , restartPolicy   :: Map.Map T.Text T.Text -- only 2 keys possible
+    , restartPolicy   :: RestartPolicy
     , networkMode     :: T.Text
     , devices         :: [HCDevice]
     , ulimits         :: [Map.Map T.Text T.Text]
     , logConfig       :: HCLogConfig
     , cgroupParent    :: T.Text -- path
+    , securityOpt     :: Maybe Value
+    , mountRun        :: Bool
     } deriving (Eq, Generic, Show)
 
 
 -- | Default instance for HostConfig
 instance Default HostConfig where
     def = HostConfig
-        { binds        = []
-        , links        = []
-        , lxcConf      = Map.empty
+        { binds        = Nothing
+        , links        = Nothing
+        , lxcConf      = Nothing
         , memory       = 0
         , memorySwap   = 0
         , cpuShares    = 512
@@ -179,48 +181,95 @@ instance Default HostConfig where
         , dnsSearch       = []
         , extraHosts      = Null
         , volumesFrom     = []
-        , capAdd          = []
+        , capAdd          = Just []
         , capDrop         = []
-        , restartPolicy   = Map.fromList [("Name", ""), ("MaximumRetryCount","0")]
+        , restartPolicy   = RestartPolicy { rpName = "" , rpMaxRetryCount = 0 }
         , networkMode     = "bridge"
         , devices         = []
         , ulimits         = []
         , logConfig       = def
         , cgroupParent    = ""
+        , securityOpt     = Nothing
+        , mountRun         = False
         }
 
 
 -- | Convert JSON to a HostConfig.
-instance FromJSON HostConfig
+instance FromJSON HostConfig where
+    parseJSON (Object x) = HostConfig
+        <$> x .:? "Binds"
+        <*> x .:? "Links"
+        <*> x .:? "LxcConf"
+        <*> x .: "Memory"
+        <*> x .: "MemorySwap"
+        <*> x .: "CpuShares"
+        <*> x .: "CpusetCpus"
+        <*> x .: "PortBindings"
+        <*> x .: "PublishAllPorts"
+        <*> x .: "Privileged"
+        <*> x .: "ReadonlyRootfs"
+        <*> x .: "Dns"
+        <*> x .: "DnsSearch"
+        <*> x .: "ExtraHosts"
+        <*> x .: "VolumesFrom"
+        <*> x .:? "CappAdd"
+        <*> x .: "CapDrop"
+        <*> x .: "RestartPolicy"
+        <*> x .: "NetworkMode"
+        <*> x .: "Devices"
+        <*> x .: "Ulimits"
+        <*> x .: "LogConfig"
+        <*> x .: "CgroupParent"
+        <*> x .:? "SecurityOpt"
+        <*> x .: "MountRun"
 
 
 -- | Convert a HostConfig to JSON.
 instance ToJSON HostConfig where
-    toJSON (HostConfig {..}) =
-        object [ "Binds"            .= binds
-               , "Links"            .= links
-               , "LxcConf"          .= lxcConf
-               , "Memory"           .= memory
-               , "MemorySwap"       .= memorySwap
-               , "CpuShares"        .= cpuShares
-               , "CpusetCpus"       .= cpusetCpus
-               , "PortBindings"     .= portBindings
-               , "PublishAllPorts"  .= publishAllPorts
-               , "Privileged"       .= privileged
-               , "ReadOnltRootfs"   .= readOnlyRootfs
-               , "Dns"              .= dns
-               , "DnsSearch"        .= dnsSearch
-               , "ExtraHosts"       .= extraHosts
-               , "VolumesFrom"      .= volumesFrom
-               , "CappAdd"          .= capAdd
-               , "CapDrop"          .= capDrop
-               , "RestartPolicy"    .= restartPolicy
-               , "NetworkMode"      .= networkMode
-               , "Devices"          .= devices
-               , "Ulimits"          .= ulimits
-               , "LogConfig"        .= logConfig
-               , "CgroupParent"     .= cgroupParent
-               ]
+    toJSON (HostConfig {..}) = object $ catMaybes
+        [ ("Binds"            .=) <$> binds
+        , ("Links"            .=) <$> links
+        , ("LxcConf"          .=) <$> lxcConf
+        , ("Memory"           .=) <$> pure memory
+        , ("MemorySwap"       .=) <$> pure memorySwap
+        , ("CpuShares"        .=) <$> pure cpuShares
+        , ("CpusetCpus"       .=) <$> pure cpusetCpus
+        , ("PortBindings"     .=) <$> pure portBindings
+        , ("PublishAllPorts"  .=) <$> pure publishAllPorts
+        , ("Privileged"       .=) <$> pure privileged
+        , ("ReadonlyRootfs"   .=) <$> pure readOnlyRootfs
+        , ("Dns"              .=) <$> pure dns
+        , ("DnsSearch"        .=) <$> pure dnsSearch
+        , ("ExtraHosts"       .=) <$> pure extraHosts
+        , ("VolumesFrom"      .=) <$> pure volumesFrom
+        , ("CappAdd"          .=) <$> capAdd
+        , ("CapDrop"          .=) <$> pure capDrop
+        , ("RestartPolicy"    .=) <$> pure restartPolicy
+        , ("NetworkMode"      .=) <$> pure networkMode
+        , ("Devices"          .=) <$> pure devices
+        , ("Ulimits"          .=) <$> pure ulimits
+        , ("LogConfig"        .=) <$> pure logConfig
+        , ("CgroupParent"     .=) <$> pure cgroupParent
+        , ("SecurityOpt" .=)      <$> securityOpt
+        , ("MountRun" .=)         <$> pure mountRun
+        ]
+
+-- | RestartPolicy
+data RestartPolicy = RestartPolicy
+    { rpName          :: T.Text
+    , rpMaxRetryCount :: Int
+    } deriving (Eq, Show)
+
+instance FromJSON RestartPolicy where
+    parseJSON (Object x) = RestartPolicy
+        <$> x .: "Name"
+        <*> x .: "MaximumRetryCount"
+
+instance ToJSON RestartPolicy where
+    toJSON (RestartPolicy {..}) = object
+        [ "Name" .= rpName
+        , "MaximumRetryCount" .= rpMaxRetryCount
+        ]
 
 -- | A device in the "Devices" field of a HostConfig object.
 data HCDevice = HCDevice
@@ -245,8 +294,8 @@ instance ToJSON HCDevice where
 -- | Log config setting in the "LogConfig" field of a
 -- HostConfig object.
 data HCLogConfig = HCLogConfig
-    { driverType   :: T.Text
-    , config :: Map.Map T.Text T.Text
+    { driverType :: T.Text
+    , config     :: Map.Map T.Text T.Text
     } deriving (Eq, Generic, Show)
 
 -- | Default instance for HCLogConfig.
@@ -258,8 +307,11 @@ instance Default HCLogConfig where
 
 
 -- | Convert JSON to a HCLogConfig.
-instance FromJSON HCLogConfig
-
+instance FromJSON HCLogConfig where
+    parseJSON (Object x) = HCLogConfig
+        <$> x .: "Type"
+        <*> x .: "Config"
+    parseJSON _ = fail "Expecting and object of type HCLogConfig!"
 
 -- | Convert a HCLogConfig to JSON.
 instance ToJSON HCLogConfig where
@@ -314,10 +366,10 @@ data ContainerInfo = ContainerInfo
     , ciState           :: ContainerInfoState
     , ciVolumes         :: Value
     , ciVolumesRW       :: Value
-    }
+    } deriving (Eq, Show)
 instance FromJSON ContainerInfo where
     parseJSON (Object x) = ContainerInfo
-        <$> x .: "AppArmourProfile"
+        <$> x .: "AppArmorProfile"
         <*> x .: "Args"
         <*> x .: "Config"
         <*> x .: "Created"
@@ -343,7 +395,7 @@ instance FromJSON ContainerInfo where
 
 instance ToJSON ContainerInfo where
     toJSON (ContainerInfo {..}) = object $ catMaybes
-        [ ("AppArmourProfile" .=) <$> pure ciAppArmorProfile
+        [ ("AppArmorProfile" .=) <$> pure ciAppArmorProfile
         , ("Args" .=) <$> pure ciArgs
         , ("Config" .=) <$> pure ciConfig
         , ("Created" .=) <$> pure ciCreated
@@ -376,7 +428,7 @@ data ContainerInfoConfig = ContainerInfoConfig
     , cicCmd             :: [T.Text]
     , cicDomainName      :: T.Text
     , cicEntryPoint      :: Maybe T.Text
-    , cicEnv             :: [T.Text]
+    , cicEnv             :: Maybe [T.Text]
     , cicExposedPorts    :: Maybe Value
     , cicHostname        :: T.Text
     , cicImage           :: T.Text
@@ -389,19 +441,19 @@ data ContainerInfoConfig = ContainerInfoConfig
     , cicStdinOnce       :: Bool
     , cicTty             :: Bool
     , cicUser            :: T.Text
-    , cicVolumes         :: T.Text
+    , cicVolumes         :: Maybe Value
     , cicWorkingDir      :: T.Text
-    }
+    } deriving (Eq, Show)
 
 instance FromJSON ContainerInfoConfig where
     parseJSON (Object x) = ContainerInfoConfig
-        <$> x .: "AttachedStderr"
-        <*> x .: "AttachedStdin"
-        <*> x .: "AttachedStdout"
+        <$> x .: "AttachStderr"
+        <*> x .: "AttachStdin"
+        <*> x .: "AttachStdout"
         <*> x .: "Cmd"
-        <*> x .: "DomainName"
+        <*> x .: "Domainname"
         <*> x .:? "Entrypoint"
-        <*> x .: "Env"
+        <*> x .:? "Env"
         <*> x .:? "ExposedPorts"
         <*> x .: "Hostname"
         <*> x .: "Image"
@@ -414,18 +466,18 @@ instance FromJSON ContainerInfoConfig where
         <*> x .: "StdinOnce"
         <*> x .: "Tty"
         <*> x .: "User"
-        <*> x .: "Volumes"
+        <*> x .:? "Volumes"
         <*> x .: "WorkingDir"
 
 instance ToJSON ContainerInfoConfig where
     toJSON (ContainerInfoConfig {..}) = object $ catMaybes
-        [ ("AttachedStderr" .=) <$> pure cicAttachStderr
-        , ("AttachedStdin" .=) <$> pure cicAttachStdin
-        , ("AttachedStdout" .=) <$> pure cicAttachStdout
+        [ ("AttachStderr" .=) <$> pure cicAttachStderr
+        , ("AttachStdin" .=) <$> pure cicAttachStdin
+        , ("AttachStdout" .=) <$> pure cicAttachStdout
         , ("Cmd" .=) <$> pure cicCmd
-        , ("DomainName" .=) <$> pure cicDomainName
+        , ("Domainname" .=) <$> pure cicDomainName
         , ("EntryPoint" .=) <$> cicEntryPoint
-        , ("Env" .=) <$> pure cicEnv
+        , ("Env" .=) <$> cicEnv
         , ("ExposedPorts" .=) <$> cicExposedPorts
         , ("Hostname" .=) <$> pure cicHostname
         , ("Image" .=) <$> pure cicImage
@@ -438,7 +490,7 @@ instance ToJSON ContainerInfoConfig where
         , ("StdinOnce" .=) <$> pure cicStdinOnce
         , ("Tty" .=) <$> pure cicTty
         , ("User" .=) <$> pure cicUser
-        , ("Volumes" .=) <$> pure cicVolumes
+        , ("Volumes" .=) <$> cicVolumes
         , ("WorkingDir" .=) <$> pure cicWorkingDir
         ]
 
@@ -452,7 +504,7 @@ data ContainerInfoNetworkSettings = ContainerInfoNetworkSettings
     , cinMacAddress :: T.Text
     , cinPortMapping:: Maybe Value
     , cinPorts      :: Maybe Value
-    }
+    } deriving (Eq, Show)
 
 instance FromJSON ContainerInfoNetworkSettings where
     parseJSON (Object x) = ContainerInfoNetworkSettings
@@ -485,7 +537,7 @@ data ContainerInfoState = ContainerInfoState
     , cisRestarting :: Bool
     , cisRunning    :: Bool
     , cisStartedAt  :: T.Text
-    }
+    } deriving (Eq, Show)
 
 instance FromJSON ContainerInfoState where
     parseJSON (Object x) = ContainerInfoState

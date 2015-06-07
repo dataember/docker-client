@@ -36,10 +36,13 @@ import Docker.JSON.Types.Container
 
 import Debug.Trace
 
-
+-- | This should be per endpoint also
 checkResponse  :: Response a -> Either String ()
 checkResponse resp = case responseStatus resp of
+    (Status 200 _) -> Right ()
     (Status 201 _) -> Right ()
+    (Status 202 _) -> Right ()
+    (Status 203 _) -> Right ()
     (Status 404 m) -> Left ("No such image! " ++ show m)
     (Status 500 m) -> Left ("Error 500! " ++ show m)
     (Status _ _)   -> Left ("Error! Undefined status returned...")
@@ -59,9 +62,12 @@ decodeResponse SInfoEndpoint resp = checkResponse resp >>=
         Left e    -> Left ("Error decoding! " ++ show e)
 
 -- | \/containers\/create response
-decodeResponse SContainerEndpoint resp = checkResponse resp >>=
+decodeResponse SContainerCreateEndpoint resp = checkResponse resp >>=
     \_ -> case eitherDecode (responseBody resp) of
         Right val -> Right val
         Left e    -> Left ("Error decoding! " ++ show e)
 
-
+decodeResponse SContainerInfoEndpoint resp = checkResponse resp >>=
+    \_ -> case eitherDecode (responseBody resp) of
+        Right val -> Right val
+        Left e    -> Left ("Error decoding! " ++ show e)

@@ -85,13 +85,16 @@ createContainer
     :: ContainerSpec
     -> Free ApiF ContainerCreateResponse
 createContainer cspec = do
-    resp <-  postF SContainerEndpoint cspec
+    resp <-  postF SContainerCreateEndpoint cspec
     return $ case resp of
         Right r -> r
         Left e  -> error (show e)
-{-
+
 inspectContainer
-    :: BS.ByteString
+    :: BC.ByteString
     -> Free ApiF ContainerInfo
 inspectContainer cid = do
-    resp <- getF SContainerEndpoint-}
+    resp <- getF SContainerInfoEndpoint cid
+    return $ case resp of
+        Right r -> r
+        Left e  -> error (show e)
