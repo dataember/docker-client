@@ -8,32 +8,13 @@
     #-}
 
 module Docker.Request where
-import Control.Monad.Base
-import Control.Monad.Catch
-import Control.Monad.Reader
-import Control.Monad.Free
-import Control.Monad.Trans.Resource (runResourceT, MonadResource, ResourceT)
 import Data.Aeson
-import Data.Aeson.Types (parseEither, Object, Value)
-import Data.Proxy
-import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BC
-import qualified Data.ByteString.Lazy as BL
-import Data.Conduit
-import qualified Data.Conduit.Attoparsec as CA
-import qualified Data.Conduit.Binary as CB
-import qualified Data.Conduit.Combinators as CC
 import Data.Default
-import Data.Functor.Identity
-import qualified Data.Map as Map
 import Data.Monoid
-import qualified Data.Text as T
 import Network.HTTP.Conduit hiding (Proxy)
-import Network.HTTP.Types.Status (Status(Status))
 
 import Docker.Language
-import Docker.JSON.Types
-import Docker.JSON.Types.Container
 
 import Debug.Trace
 
@@ -63,12 +44,12 @@ getContainerInfoRequest
     :: BC.ByteString -- ^ Container id
     -> DaemonAddress
     -> Request
-getContainerInfoRequest id da =
+getContainerInfoRequest cid da =
     defaultRequest
         { method = "GET"
         , host = daemonHost da
         , port = daemonPort da
-        , path = "/containers/" <> id <> "/json"
+        , path = "/containers/" <> cid <> "/json"
         }
 
 
@@ -94,7 +75,7 @@ getRequest
     -> GetEndpoint e
     -> DaemonAddress
     -> Request
-getRequest SInfoEndpoint d addr = getInfoRequest addr
+getRequest SInfoEndpoint _ addr = getInfoRequest addr
 getRequest SContainerInfoEndpoint d addr = getContainerInfoRequest d addr
 
 

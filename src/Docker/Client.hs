@@ -8,28 +8,13 @@
     #-}
 
 module Docker.Client where
-import Control.Monad.Base
-import Control.Monad.Catch
-import Control.Monad.Reader
-import Control.Monad.Free
-import Control.Monad.Trans.Resource (runResourceT, MonadResource, ResourceT)
-import Data.Aeson
-import Data.Aeson.Types (parseEither, Object, Value)
-import Data.Proxy
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Char8 as BC
-import qualified Data.ByteString.Lazy as BL
-import Data.Conduit
-import qualified Data.Conduit.Attoparsec as CA
-import qualified Data.Conduit.Binary as CB
-import qualified Data.Conduit.Combinators as CC
-import Data.Default
-import Data.Functor.Identity
-import qualified Data.Map as Map
-import Data.Monoid
-import Network.HTTP.Conduit hiding (Proxy)
-import Network.HTTP.Types.Status (Status(Status))
 
+import Control.Monad.Free
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Reader
+import Data.Proxy
+import qualified Data.ByteString.Char8 as BC
+import Network.HTTP.Conduit hiding (Proxy)
 
 import Docker.Language
 import Docker.Request
@@ -70,8 +55,9 @@ httpDocker (Free (PostF e d c)) = do
     httpDocker . c . decodeResponse e $ response
 
 -------------------------------------------------------------------------------
+-- FIXME : These should not be partial
+
 -- | Get \/info
--- FIXME : This should not be partial
 getInfo :: Free ApiF DockerDaemonInfo
 getInfo = do
     info <- getF SInfoEndpoint Proxy

@@ -1,17 +1,13 @@
 {-# LANGUAGE
-    DeriveGeneric
-    , OverloadedStrings
+    OverloadedStrings
     , RecordWildCards
     #-}
 
 module Docker.JSON.Types where
 
 import Data.Aeson
-import Data.Default
 import qualified Data.Map as Map
-import Data.Maybe
 import qualified Data.Text as T
-import GHC.Generics
 
 
 -------------------------------------------------------------------------------
