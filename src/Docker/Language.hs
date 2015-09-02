@@ -9,6 +9,7 @@
 
 module Docker.Language where
 
+import Data.Aeson
 import Data.Proxy
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as BL
@@ -37,9 +38,9 @@ data SApiEndpoint (e :: ApiEndpoint) :: * where
     SImageCreateEndpoint    :: SApiEndpoint 'ImageCreateEndpoint
 
 type family ApiEndpointBase (e :: ApiEndpoint) :: * where
-    ApiEndpointBase 'InfoEndpoint            = DockerDaemonInfo
-    ApiEndpointBase 'ContainerCreateEndpoint = ContainerCreateResponse
-    ApiEndpointBase 'ContainerInfoEndpoint   = ContainerInfo
+    ApiEndpointBase 'InfoEndpoint            = Object --DockerDaemonInfo
+    ApiEndpointBase 'ContainerCreateEndpoint = Object --ContainerCreateResponse
+    ApiEndpointBase 'ContainerInfoEndpoint   = Object --ContainerInfo
     ApiEndpointBase 'ImageCreateEndpoint     = BL.ByteString
 
 

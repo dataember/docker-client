@@ -9,6 +9,7 @@
 
 module Docker.Client where
 
+import Data.Aeson
 import Control.Monad.Free
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
@@ -60,7 +61,7 @@ httpDocker (Free (PostF e d c)) = do
 -- FIXME : These should not be partial
 
 -- | Get \/info
-getInfo :: Free ApiF DockerDaemonInfo
+getInfo :: Free ApiF Object --DockerDaemonInfo
 getInfo = do
     info <- getF SInfoEndpoint Proxy
     return $ case info of
@@ -71,7 +72,7 @@ getInfo = do
 -- | Post \/containers\/create
 createContainer
     :: ContainerSpec
-    -> Free ApiF ContainerCreateResponse
+    -> Free ApiF Object -- ContainerCreateResponse
 createContainer cspec = do
     resp <-  postF SContainerCreateEndpoint cspec
     return $ case resp of
@@ -80,7 +81,7 @@ createContainer cspec = do
 
 inspectContainer
     :: BC.ByteString
-    -> Free ApiF ContainerInfo
+    -> Free ApiF Object -- ContainerInfo
 inspectContainer cid = do
     resp <- getF SContainerInfoEndpoint cid
     return $ case resp of
