@@ -50,3 +50,6 @@ decodeResponse SContainerInfoEndpoint resp = checkResponse resp >>=
     \_ -> case eitherDecode (responseBody resp) of
         Right val -> Right val
         Left e    -> Left ("Error decoding! " ++ show e)
+
+decodeResponse SImageCreateEndpoint resp = checkResponse resp >>=
+    \_ -> Right $ responseBody resp

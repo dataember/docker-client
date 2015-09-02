@@ -11,7 +11,7 @@ module Docker.Language where
 
 import Data.Proxy
 import qualified Data.ByteString.Char8 as BC
-
+import qualified Data.ByteString.Lazy as BL
 import Docker.JSON.Types
 import Docker.JSON.Types.Container
 
@@ -24,31 +24,33 @@ data DaemonAddress = DaemonAddress
 
 type ContainerId = BC.ByteString
 
--- * Language for the Docker Remote API
 data ApiEndpoint =
     InfoEndpoint
     | ContainerCreateEndpoint
     | ContainerInfoEndpoint
+    | ImageCreateEndpoint
 
 data SApiEndpoint (e :: ApiEndpoint) :: * where
     SInfoEndpoint           :: SApiEndpoint 'InfoEndpoint
-    SContainerCreateEndpoint      :: SApiEndpoint 'ContainerCreateEndpoint
+    SContainerCreateEndpoint:: SApiEndpoint 'ContainerCreateEndpoint
     SContainerInfoEndpoint  :: SApiEndpoint 'ContainerInfoEndpoint
+    SImageCreateEndpoint    :: SApiEndpoint 'ImageCreateEndpoint
 
--- | Bind response data for
 type family ApiEndpointBase (e :: ApiEndpoint) :: * where
     ApiEndpointBase 'InfoEndpoint            = DockerDaemonInfo
     ApiEndpointBase 'ContainerCreateEndpoint = ContainerCreateResponse
     ApiEndpointBase 'ContainerInfoEndpoint   = ContainerInfo
+    ApiEndpointBase 'ImageCreateEndpoint     = BL.ByteString
 
--- | Bind request data for a GET on specific endpoint
+
 type family GetEndpoint (e :: ApiEndpoint) :: * where
     GetEndpoint 'InfoEndpoint          = Proxy ()
     GetEndpoint 'ContainerInfoEndpoint = ContainerId
 
--- | bind request data for a POST on a specific endpoint
 type family PostEndpoint (e :: ApiEndpoint) :: * where
     PostEndpoint 'ContainerCreateEndpoint = ContainerSpec
+    PostEndpoint 'ImageCreateEndpoint     = String
+
 
 data ApiF a where
     GetF

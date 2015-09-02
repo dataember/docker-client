@@ -19,50 +19,6 @@ import Docker.Language
 import Debug.Trace
 
 
-
--- * Request builders
-defaultRequest :: Request
-defaultRequest =
-    def { checkStatus = \_ _ _ -> Nothing
-        , redirectCount = 0
-        , requestHeaders = requestHeaders def ++
-            [("content-type", "application/json")]
-        }
-
--- | Build a GET request for \/info
-getInfoRequest :: DaemonAddress -> Request
-getInfoRequest da =
-    defaultRequest
-        { method = "GET"
-        , host = daemonHost da
-        , port = daemonPort da
-        , path = "/info"
-        }
-
--- | Build a GET request for \/containers\/\(id\)\/json
-getContainerInfoRequest
-    :: BC.ByteString -- ^ Container id
-    -> DaemonAddress
-    -> Request
-getContainerInfoRequest cid da =
-    defaultRequest
-        { method = "GET"
-        , host = daemonHost da
-        , port = daemonPort da
-        , path = "/containers/" <> cid <> "/json"
-        }
-
-
--- | Build a POST request for \/container\/create
-postContainerRequest :: DaemonAddress -> Request
-postContainerRequest da =
-    defaultRequest
-        { method = "POST"
-        , host   = daemonHost da
-        , port   = daemonPort da
-        , path   = "/containers/create"
-        }
-
 {-
 data ApiRequestData = ApiRequestData
     { arPath          :: BS.ByteString
@@ -75,8 +31,11 @@ getRequest
     -> GetEndpoint e
     -> DaemonAddress
     -> Request
-getRequest SInfoEndpoint _ addr = getInfoRequest addr
-getRequest SContainerInfoEndpoint d addr = getContainerInfoRequest d addr
+getRequest SInfoEndpoint _ addr =
+    (defaultGetRequest addr) { path = "/info" }
+
+getRequest SContainerInfoEndpoint d addr =
+    (defaultGetRequest addr) {path = "/containers/" <> d <> "/json"}
 
 
 postRequest
@@ -86,8 +45,46 @@ postRequest
     -> Request
 postRequest SContainerCreateEndpoint d addr =
     traceShow d $
-    (postContainerRequest addr)
+    (defaultPostRequest addr)
         { requestBody = RequestBodyLBS $ encode d
+        , path = "/containers/create"
         }
+
+-- FIXME : Query string should be a type with:
+-- fromImage – name of the image to pull
+-- fromSrc – source to import.
+-- repo – repository
+-- tag – tag
+-- registry – the registry to pull from
+--
+-- See <https://docs.docker.com/reference/api/docker_remote_api_v1.18/>
+postRequest SImageCreateEndpoint d addr =
+    (defaultPostRequest addr)
+        { path        = "/images/create"
+        , queryString = BC.pack d
+        }
+
+-- * Request builders
+defaultRequest :: Request
+defaultRequest =
+    def { checkStatus = \_ _ _ -> Nothing
+        , redirectCount = 0
+        , requestHeaders = requestHeaders def ++
+            [("content-type", "application/json")]
+        }
+
+defaultGetRequest :: DaemonAddress -> Request
+defaultGetRequest da = defaultRequest
+    { method = "GET"
+    , host   = daemonHost da
+    , port   = daemonPort da
+    }
+
+defaultPostRequest :: DaemonAddress -> Request
+defaultPostRequest da = defaultRequest
+    { method = "POST"
+    , host   = daemonHost da
+    , port   = daemonPort da
+    }
 
 

@@ -70,6 +70,8 @@ instance FromJSON DockerDaemonInfo where
         <*> x .: "RegistryConfig"
         <*> x .: "SwapLimit"
         <*> x .: "SystemTime"
+    -- FIXME : Do something more logical!!
+    parseJSON _ = error "Failure!!"
 
 instance ToJSON DockerDaemonInfo where
     toJSON (DockerDaemonInfo {..}) =

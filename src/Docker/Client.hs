@@ -12,8 +12,10 @@ module Docker.Client where
 import Control.Monad.Free
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
+import Data.Conduit.Binary
 import Data.Proxy
 import qualified Data.ByteString.Char8 as BC
+import qualified Data.ByteString.Lazy as BL
 import Network.HTTP.Conduit hiding (Proxy)
 
 import Docker.Language
@@ -81,6 +83,15 @@ inspectContainer
     -> Free ApiF ContainerInfo
 inspectContainer cid = do
     resp <- getF SContainerInfoEndpoint cid
+    return $ case resp of
+        Right r -> r
+        Left e  -> error (show e)
+
+createImage
+    :: String
+    -> Free ApiF BL.ByteString
+createImage image = do
+    resp <- postF SImageCreateEndpoint image
     return $ case resp of
         Right r -> r
         Left e  -> error (show e)
