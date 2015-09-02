@@ -222,7 +222,8 @@ instance FromJSON HostConfig where
         <*> x .: "CgroupParent"
         <*> x .:? "SecurityOpt"
         <*> x .: "MountRun"
-
+    -- FIXME : Return something logical...
+    parseJSON _ = error "Failure!"
 
 -- | Convert a HostConfig to JSON.
 instance ToJSON HostConfig where
@@ -264,6 +265,9 @@ instance FromJSON RestartPolicy where
     parseJSON (Object x) = RestartPolicy
         <$> x .: "Name"
         <*> x .: "MaximumRetryCount"
+    -- FIXME : Return something logical...
+    parseJSON _ = error "Failure!"
+
 
 instance ToJSON RestartPolicy where
     toJSON (RestartPolicy {..}) = object
@@ -334,6 +338,9 @@ instance FromJSON ContainerCreateResponse where
     parseJSON (Object x) =  ContainerCreateResponse
         <$> x .: "Id"
         <*> x .:? "Warnings"
+    -- FIXME : Return something logical...
+    parseJSON _ = error "Failure!"
+
 
 instance ToJSON ContainerCreateResponse where
     toJSON (ContainerCreateResponse {..}) = object $ catMaybes
@@ -392,6 +399,9 @@ instance FromJSON ContainerInfo where
         <*> x .: "State"
         <*> x .: "Volumes"
         <*> x .: "VolumesRW"
+    -- FIXME : Return something logical...
+    parseJSON _ = error "Failure!"
+
 
 instance ToJSON ContainerInfo where
     toJSON (ContainerInfo {..}) = object $ catMaybes
@@ -468,6 +478,9 @@ instance FromJSON ContainerInfoConfig where
         <*> x .: "User"
         <*> x .:? "Volumes"
         <*> x .: "WorkingDir"
+    -- FIXME : Return something logical...
+    parseJSON _ = error "Failure!"
+
 
 instance ToJSON ContainerInfoConfig where
     toJSON (ContainerInfoConfig {..}) = object $ catMaybes
@@ -515,6 +528,9 @@ instance FromJSON ContainerInfoNetworkSettings where
         <*> x .: "MacAddress"
         <*> x .:? "PortMapping"
         <*> x .:? "Ports"
+    -- FIXME : Return something logical...
+    parseJSON _ = error "Failure!"
+
 
 instance ToJSON ContainerInfoNetworkSettings where
     toJSON (ContainerInfoNetworkSettings {..}) = object $ catMaybes
@@ -550,6 +566,9 @@ instance FromJSON ContainerInfoState where
         <*> x .: "Restarting"
         <*> x .: "Running"
         <*> x .: "StartedAt"
+    -- FIXME : Return something logical...
+    parseJSON _ = error "Failure!"
+
 
 instance ToJSON ContainerInfoState where
     toJSON (ContainerInfoState {..}) = object
