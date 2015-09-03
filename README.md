@@ -3,6 +3,6 @@
 
 ```haskell
 let daddr = DaemonAddress "192.168.1.2" 2375
-withManager $
-    \mgr -> runReaderT (httpDocker $ createContainer def) (mgr,daddr)
+newManager tlsManagerSettings >>=
+    \mgr -> runReaderT getInfo (mgr,daddr)
 ```

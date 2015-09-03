@@ -61,8 +61,10 @@ httpDocker (Free (PostF e d c)) = do
 -- FIXME : These should not be partial
 
 -- | Get \/info
-getInfo :: Free ApiF Object --DockerDaemonInfo
-getInfo = do
+getInfo
+    :: MonadIO m
+    => ReaderT (Manager, DaemonAddress) m Object --DockerDaemonInfo
+getInfo = httpDocker $ do
     info <- getF SInfoEndpoint Proxy
     return $ case info of
         Right i -> i
@@ -71,27 +73,30 @@ getInfo = do
 
 -- | Post \/containers\/create
 createContainer
-    :: ContainerSpec
-    -> Free ApiF Object -- ContainerCreateResponse
-createContainer cspec = do
+    :: MonadIO m
+    => ContainerSpec
+    -> ReaderT (Manager, DaemonAddress) m Object -- ContainerCreateResponse
+createContainer cspec = httpDocker $ do
     resp <-  postF SContainerCreateEndpoint cspec
     return $ case resp of
         Right r -> r
         Left e  -> error (show e)
 
 inspectContainer
-    :: BC.ByteString
-    -> Free ApiF Object -- ContainerInfo
-inspectContainer cid = do
+    :: MonadIO m
+    => BC.ByteString
+    -> ReaderT (Manager, DaemonAddress) m Object -- ContainerInfo
+inspectContainer cid = httpDocker $ do
     resp <- getF SContainerInfoEndpoint cid
     return $ case resp of
         Right r -> r
         Left e  -> error (show e)
 
 createImage
-    :: String
-    -> Free ApiF BL.ByteString
-createImage image = do
+    :: MonadIO m
+    => String
+    -> ReaderT (Manager, DaemonAddress) m BL.ByteString
+createImage image = httpDocker $  do
     resp <- postF SImageCreateEndpoint image
     return $ case resp of
         Right r -> r
