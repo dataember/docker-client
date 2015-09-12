@@ -20,7 +20,8 @@ import GHC.Generics
 
 -- | Specification for a container.
 --
--- FIXME : This needs to be better typed, and cleaned up.
+-- FIXME : This needs to be better typed, and cleaned up.... Emphasis on the
+-- cleaning part...
 --
 -- See <https://docs.docker.com/reference/api/docker_remote_api_v1.18/#create-a-container create a container>
 -- for more information.
@@ -581,6 +582,53 @@ instance ToJSON ContainerInfoState where
         , "Restarting"  .= cisRestarting
         , "Running"     .= cisRunning
         , "StartedAt"   .= cisStartedAt
+        ]
+
+-- * Exec
+
+data ContainerExecInit = ContainerExecInit
+    { execInitAttachStdin :: Bool
+    , execInitAttachStdout:: Bool
+    , execInitAttachStderr:: Bool
+    , execInitTty         :: Bool
+    , execInitCmd         :: [T.Text]
+    } deriving (Eq, Show)
+
+instance FromJSON ContainerExecInit where
+    parseJSON (Object x) = ContainerExecInit
+        <$> x .: "AttachStdin"
+        <*> x .: "AttachStdout"
+        <*> x .: "AttachStderr"
+        <*> x .: "Tty"
+        <*> x .: "Cmd"
+    -- FIXME : Return something logical...
+    parseJSON _ = error "Failure!"
+
+instance ToJSON ContainerExecInit where
+    toJSON (ContainerExecInit {..}) = object
+        [ "AttachStdin" .= execInitAttachStdin
+        , "AttachStdout".= execInitAttachStdout
+        , "AttachStderr".= execInitAttachStderr
+        , "Tty"         .= execInitTty
+        , "Cmd"         .= execInitCmd
+        ]
+
+data ExecStart = ExecStart
+    { execStartDetach :: Bool
+    , execStartTty    :: Bool
+    } deriving (Eq, Show)
+
+instance FromJSON ExecStart where
+    parseJSON (Object x) = ExecStart
+        <$> x .: "Detach"
+        <*> x .: "Tty"
+     -- FIXME : Return something logical...
+    parseJSON _ = error "Failure!"
+
+instance ToJSON ExecStart where
+    toJSON (ExecStart {..}) = object
+        [ "Detach" .= execStartDetach
+        , "Tty"    .= execStartTty
         ]
 
 

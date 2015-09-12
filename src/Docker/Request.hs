@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 {-# LANGUAGE
     DataKinds
     , DeriveFunctor
@@ -19,13 +20,7 @@ import Docker.Language
 import Debug.Trace
 
 
-{-
-data ApiRequestData = ApiRequestData
-    { arPath          :: BS.ByteString
-    , arRequestBody   :: BL.ByteString
-    , arDaemonAddress :: DaemonAddress
-    }
--}
+
 getRequest
     :: SApiEndpoint e
     -> GetEndpoint e
@@ -35,7 +30,14 @@ getRequest SInfoEndpoint _ addr =
     (defaultGetRequest addr) { path = "/info" }
 
 getRequest SContainerInfoEndpoint d addr =
-    (defaultGetRequest addr) {path = "/containers/" <> d <> "/json"}
+    (defaultGetRequest addr) { path = "/containers/" <> d <> "/json" }
+
+-- FIXME : Must be updated to take query string
+getRequest SImageListEndpoint _ addr =
+    (defaultGetRequest addr) { path = "/images/json" }
+
+getRequest SImageInfoEndpoint d addr =
+    (defaultGetRequest addr) { path = "/images/" <> d <> "/json" }
 
 
 postRequest
@@ -43,12 +45,42 @@ postRequest
     -> PostEndpoint e
     -> DaemonAddress
     -> Request
+
 postRequest SContainerCreateEndpoint d addr =
     traceShow d $
     (defaultPostRequest addr)
         { requestBody = RequestBodyLBS $ encode d
         , path = "/containers/create"
         }
+
+postRequest SContainerExecInitEndpoint d addr =
+    traceShow d $
+    (defaultPostRequest addr)
+        { requestBody = RequestBodyLBS $ encode (postData d)
+        , path = "/containers/" <> containerId d <>  "/exec"
+        }
+
+postRequest SContainerStartEndpoint d addr =
+    traceShow d $
+    (defaultPostRequest addr)
+        { requestBody = RequestBodyLBS $ mempty
+        , path = "/containers/" <> d <>  "/start"
+        }
+
+postRequest SContainerStopEndpoint d addr =
+    traceShow d $
+    (defaultPostRequest addr)
+        { path = "/containers/" <> d <>  "/stop"
+        }
+
+
+postRequest SExecStartEndpoint d addr =
+    traceShow d $
+    (defaultPostRequest addr)
+        { requestBody = RequestBodyLBS $ encode (execPostData d)
+        , path = "/exec/" <> execId d <>  "/start"
+        }
+
 
 -- FIXME : Query string should be a type with:
 -- fromImage – name of the image to pull
